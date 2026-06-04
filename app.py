@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import streamlit as st
 from pathlib import Path
 from io import BytesIO
@@ -104,7 +103,6 @@ if st.button("Generate Excel"):
         )
     except Exception as e:
         st.error(f"Failed to generate Excel: {e}")
-=======
 import streamlit as st
 from pathlib import Path
 from io import BytesIO
@@ -252,4 +250,3 @@ if st.button("Generate Excel"):
         file_name=file_name,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
->>>>>>> e7cc4792e7db27f9a13003bcfa5ef79af082d6a5
