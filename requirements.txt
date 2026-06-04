@@ -3,8 +3,4 @@ pandas
 requests
 beautifulsoup4
 openpyxl
-<<<<<<< HEAD
 lxml
-=======
-lxml
->>>>>>> e7cc4792e7db27f9a13003bcfa5ef79af082d6a5
