@@ -1,30 +1,8 @@
 from __future__ import annotations
 
-import re
-
 import pandas as pd
 from bs4 import BeautifulSoup
-from .convertToScientific import convert_scientific, infer_scientific_columns
-
-def parse_radionuclide(value):
-    """Convert 'Ac-225 (a)' -> ('225Ac', 'a', 'Ac-225') etc."""
-    if pd.isna(value):
-        return value, "", ""
-
-    s = str(value).strip()
-    notes = re.findall(r"\(([^)]*)\)", s)
-    note_text = "; ".join(n.strip() for n in notes if n.strip())
-    core = re.sub(r"\s*\([^)]*\)", "", s).strip()
-
-    m = re.match(r"^([A-Za-z]+)-(\d+)([A-Za-z]*)$", core)
-    if not m:
-        return s, note_text, core
-
-    symbol = m.group(1)
-    mass = m.group(2).zfill(3)
-    suffix = m.group(3)
-    formatted = f"{mass}{symbol}{suffix}"
-    return formatted, note_text, core
+from .radionuclidesFormatter import parse_radionuclide, is_radionuclide_column
 
 
 
@@ -77,28 +55,17 @@ def table_html_to_df(table_html: str) -> pd.DataFrame:
 
 
 def format_df(df: pd.DataFrame):
-    """Apply radionuclide parsing and numeric conversion heuristics."""
-    scientific_cols = []
-
-    # Reformat likely radionuclide columns only when present.
+    """Apply radionuclide parsing only."""
     for col in df.columns:
-        col_lower = str(col).lower()
-        if "symbol" in col_lower and "radionuclide" in col_lower:
+        if is_radionuclide_column(col):
             parsed = df[col].apply(parse_radionuclide).apply(pd.Series)
-            parsed.columns = [col, "Symbol note", "Symbol core"]
+            parsed.columns = [col, "Symbol note", "Symbol footnotes", "Symbol core"]
 
             df = df.drop(columns=[col]).join(parsed)
 
-            first_cols = [col, "Symbol note", "Symbol core"]
+            first_cols = [col, "Symbol note", "Symbol footnotes", "Symbol core"]
             other_cols = [c for c in df.columns if c not in first_cols]
             df = df[first_cols + other_cols]
             break
 
-    # Infer and convert scientific columns
-    scientific_cols = infer_scientific_columns(df)
-
-    for col in scientific_cols:
-        if col in df.columns:
-            df[col] = df[col].apply(convert_scientific)
-
-    return df, scientific_cols
+    return df, []
