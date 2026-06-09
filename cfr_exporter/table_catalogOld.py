@@ -5,14 +5,6 @@ import re
 from bs4 import BeautifulSoup
 
 
-def truncate(text: str, max_len: int = 100) -> str:
-    text = (text or "").strip()
-    if len(text) <= max_len:
-        return text
-    return text[: max_len - 3].rstrip() + "..."
-
-
-
 def build_table_catalog(xml_text: str):
     soup = BeautifulSoup(xml_text, "xml")
     tables = soup.find_all("TABLE")
