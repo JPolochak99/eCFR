@@ -4,7 +4,7 @@ import uuid
 
 import streamlit as st
 
-from cfr_exporter.derived_sheet_builder import DerivedSheetConfig, build_derived_sheet
+from cfr_exporter.derived_sheet_builder import DerivedLookupConfig, build_derived_sheet
 from cfr_exporter.sanitize_names import sanitize_sheet_name
 from cfr_exporter.toast_messages import queue_toast_and_rerun
 from cfr_exporter.ui.ui_error_dialog import show_error_dialog
@@ -59,7 +59,7 @@ def render_derived_sheet_builder():
 
         if st.button("Create derived sheet"):
             try:
-                config = DerivedSheetConfig(
+                config = DerivedLookupConfig(
                     sheet_name=sanitize_sheet_name(sheet_name),
                     base_table_id=base_item["id"],
                     lookup_table_id=lookup_item["id"] if lookup_item else None,
