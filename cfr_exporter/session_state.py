@@ -13,6 +13,9 @@ def init_state() -> None:
         "workbook_name": "CFR Export Workbook",
         "sheet_name_source": "",
         "sheet_name_value": "",
+        "toast_message": "",
+        "toast_icon": "✅",
+        "ai_summaries": {},
     }
 
     for key, value in defaults.items():

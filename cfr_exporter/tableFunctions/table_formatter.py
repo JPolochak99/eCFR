@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .radionuclides import is_radionuclide_column, parse_radionuclide
+from ..radionuclides import is_radionuclide_column, parse_radionuclide
 import pandas as pd
 
 def format_df(df: pd.DataFrame):

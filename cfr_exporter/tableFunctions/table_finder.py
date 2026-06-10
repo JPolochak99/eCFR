@@ -1,4 +1,4 @@
-from .ecfr_client import fetch_api
+from ..ecfr_client import fetch_api
 from .table_catalog import build_table_catalog
 
 def find_tables(

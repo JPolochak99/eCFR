@@ -4,49 +4,61 @@ import streamlit as st
 
 from cfr_exporter.date_utils import resolve_effective_date
 from cfr_exporter.session_state import init_state
-from cfr_exporter.table_finder import find_tables
-from cfr_exporter.ui_renderSideBar import render_sidebar
-from cfr_exporter.ui_tablePreview import render_table_preview_and_actions
-from cfr_exporter.ui_tableSelector import render_table_selector
-from cfr_exporter.ui_workbook import render_workbook_contents
-from cfr_exporter.workbook_builder import build_workbook_bytes
+from cfr_exporter.tableFunctions.table_finder import find_tables
+from cfr_exporter.ui.ui_empty_states import render_no_tables_state, render_empty_workbook_state, render_start_state
+from cfr_exporter.ui.ui_error_dialog import show_error_dialog
+from cfr_exporter.ui.ui_renderSideBar import render_sidebar
+from cfr_exporter.ui.ui_tablePreview import render_table_preview_and_actions
+from cfr_exporter.ui.ui_tableSelector import render_table_selector
+from cfr_exporter.ui.ui_workbookContent import render_workbook_contents
+from cfr_exporter.workbookContentBuilders.workbook_builder import build_workbook_bytes
 from cfr_exporter.sanitize_names import sanitize_filename
 
 st.title("CFR to Excel Export")
 
 init_state()
+
+if st.session_state.get("toast_message"):
+    st.toast(
+        st.session_state.toast_message,
+        icon=st.session_state.toast_icon,
+    )
+    st.session_state.toast_message = ""
+    st.session_state.toast_icon = "✅"
+
 sidebar_inputs = render_sidebar()
 
 if sidebar_inputs["find_clicked"]:
     try:
-        effective_date_str = resolve_effective_date(
-            sidebar_inputs["title"],
-            sidebar_inputs["use_latest"],
-            sidebar_inputs["custom_date"],
-        )
-        st.session_state.effective_date_str = effective_date_str
-        st.session_state.table_catalog = find_tables(
-            sidebar_inputs["title"],
-            sidebar_inputs["subtitle"],
-            sidebar_inputs["chapter"],
-            sidebar_inputs["subchapter"],
-            sidebar_inputs["part"],
-            sidebar_inputs["subpart"],
-            sidebar_inputs["section"],
-            effective_date_str,
-        )
+        with st.spinner("Searching eCFR..."):
+            effective_date_str = resolve_effective_date(
+                sidebar_inputs["title"],
+                sidebar_inputs["use_latest"],
+                sidebar_inputs["custom_date"],
+            )
+            st.session_state.effective_date_str = effective_date_str
+            st.session_state.table_catalog = find_tables(
+                sidebar_inputs["title"],
+                sidebar_inputs["subtitle"],
+                sidebar_inputs["chapter"],
+                sidebar_inputs["subchapter"],
+                sidebar_inputs["part"],
+                sidebar_inputs["subpart"],
+                sidebar_inputs["section"],
+                effective_date_str,
+            )
         st.session_state.endpoint_error = ""
     except Exception as e:
         st.session_state.table_catalog = []
         st.session_state.endpoint_error = str(e)
+        show_error_dialog(e)
 
 if st.session_state.endpoint_error:
-    st.error(st.session_state.endpoint_error)
-
-left, center, right = st.columns([1, 1, 1])
+    st.error("Unable to load CFR data.")
+elif not st.session_state.table_catalog:
+    render_start_state()
 
 st.subheader("Workbook")
-
 st.session_state.workbook_name = st.text_input(
     "Workbook name",
     value=st.session_state.workbook_name,
@@ -55,9 +67,7 @@ st.session_state.workbook_name = st.text_input(
 )
 
 if st.session_state.table_catalog:
-    selected_item = render_table_selector(
-        st.session_state.table_catalog,
-    )
+    selected_item = render_table_selector(st.session_state.table_catalog)
 
     try:
         render_table_preview_and_actions(
@@ -73,12 +83,26 @@ if st.session_state.table_catalog:
         )
     except Exception as e:
         st.session_state.table_catalog = []
-        st.error(f"Could not prepare selected table: {e}")
+        show_error_dialog(e)
+
 
 render_workbook_contents(st.session_state.workbook_tables)
 
 if st.session_state.workbook_tables:
-    workbook_bytes = build_workbook_bytes(st.session_state.workbook_tables)
+    workbook_bytes = build_workbook_bytes(
+    st.session_state.workbook_tables,
+    metadata={
+        "workbook_name": st.session_state.workbook_name,
+        "title": sidebar_inputs["title"],
+        "subtitle": sidebar_inputs["subtitle"],
+        "chapter": sidebar_inputs["chapter"],
+        "subchapter": sidebar_inputs["subchapter"],
+        "part": sidebar_inputs["part"],
+        "subpart": sidebar_inputs["subpart"],
+        "section": sidebar_inputs["section"],
+        "effective_date_str": st.session_state.effective_date_str,
+    },
+)
     final_workbook_name = sanitize_filename(st.session_state.workbook_name) + ".xlsx"
 
     st.download_button(
@@ -86,4 +110,10 @@ if st.session_state.workbook_tables:
         workbook_bytes,
         file_name=final_workbook_name,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+with st.sidebar.expander("Developer Testing"):
+    test_mode = st.selectbox(
+        "Trigger test case",
+        ["None", "Force add error", "Force fetch error", "Force parse error"],
     )
