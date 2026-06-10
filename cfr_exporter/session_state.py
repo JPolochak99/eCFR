@@ -16,6 +16,7 @@ def init_state() -> None:
         "toast_message": "",
         "toast_icon": "✅",
         "ai_summaries": {},
+        "derived_sheets": [],
     }
 
     for key, value in defaults.items():

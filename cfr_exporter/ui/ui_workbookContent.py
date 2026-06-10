@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import streamlit as st
-from cfr_exporter.toast_messages import queue_toast
+from cfr_exporter.toast_messages import queue_toast_and_rerun
 from cfr_exporter.ui.ui_empty_states import render_empty_workbook_state
 from .moveSheet import move_item
 
@@ -21,13 +21,13 @@ def render_workbook_contents(workbook_tables):
         #move up 
         if cols[1].button("↑", key=f"up_{item['id']}", disabled=(i == 0)):
             move_item(st.session_state.workbook_tables, i, i - 1)
-            queue_toast(f"Moved '{item['sheet_name']}' up.", "✅")
+            queue_toast_and_rerun(f"Moved '{item['sheet_name']}' up.", "✅")
             st.rerun()
 
         #move down
         if cols[2].button("↓", key=f"down_{item['id']}", disabled=(i == (len(workbook_tables)) - 1)):
             move_item(st.session_state.workbook_tables, i, i + 1)
-            queue_toast(f"Moved '{item['sheet_name']}' down.", "✅")
+            queue_toast_and_rerun(f"Moved '{item['sheet_name']}' down.", "✅")
             st.rerun()
         
 
@@ -36,13 +36,12 @@ def render_workbook_contents(workbook_tables):
                 x for x in st.session_state.workbook_tables
                 if x["id"] != item["id"]
             ]
-            queue_toast(f"Removed '{item['sheet_name']}' from workbook.", "✅")
+            queue_toast_and_rerun(f"Removed '{item['sheet_name']}' from workbook.", "✅")
             st.rerun()
 
     clear_col1, _ = st.columns([1, 3])
     with clear_col1:
         if st.button("Clear workbook"):
             st.session_state.workbook_tables = []
-            queue_toast("Cleared all tables from workbook.", "✅")
-            st.rerun()
+            queue_toast_and_rerun("Cleared all tables from workbook.", "✅")
 
