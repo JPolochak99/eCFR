@@ -6,61 +6,93 @@ import pandas as pd
 
 
 @dataclass
-class DerivedLookupConfig:
+class LookupConfig:
+    table_id: str
+    key_column: str
+    columns: list[str]
+
+
+@dataclass
+class DerivedSheetConfig:
     sheet_name: str
     base_table_id: str
-    lookup_table_id: str
-    base_key_col: str
-    lookup_key_col: str
+    base_key_column: str
     base_columns: list[str]
-    lookup_columns: list[str]
-    join_type: str = "left"
+    lookups: list[LookupConfig]
 
 
-def get_table_df(workbook_tables: list[dict], table_id: str) -> pd.DataFrame:
+def get_table_by_id(workbook_tables: list[dict], table_id: str) -> dict:
     for item in workbook_tables:
         if item["id"] == table_id:
-            return item["df"].copy()
+            return item
     raise ValueError(f"Table with id '{table_id}' was not found.")
 
 
-def _normalize_key(series: pd.Series) -> pd.Series:
-    return series.fillna("").astype(str).str.strip()
+def normalize_join_key(series: pd.Series) -> pd.Series:
+    return (
+        series.fillna("")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
 
 
 def build_derived_sheet(
     workbook_tables: list[dict],
-    config: DerivedLookupConfig,
+    config: DerivedSheetConfig,
 ) -> pd.DataFrame:
-    base_df = get_table_df(workbook_tables, config.base_table_id)
-    lookup_df = get_table_df(workbook_tables, config.lookup_table_id)
+    base_item = get_table_by_id(workbook_tables, config.base_table_id)
+    base_df = base_item["df"].copy()
 
-    if config.base_key_col not in base_df.columns:
-        raise ValueError(f"Base key column '{config.base_key_col}' was not found.")
-    if config.lookup_key_col not in lookup_df.columns:
-        raise ValueError(f"Lookup key column '{config.lookup_key_col}' was not found.")
+    if config.base_key_column not in base_df.columns:
+        raise ValueError(f"Base key column '{config.base_key_column}' was not found.")
 
     base_cols = [c for c in config.base_columns if c in base_df.columns]
-    lookup_cols = [c for c in config.lookup_columns if c in lookup_df.columns]
 
-    if config.base_key_col not in base_cols:
-        base_cols = [config.base_key_col] + base_cols
+    if config.base_key_column not in base_cols:
+        base_cols = [config.base_key_column] + base_cols
 
-    if not lookup_cols:
-        raise ValueError("Select at least one lookup column.")
+    result = base_df[base_cols].copy()
+    result["_join_key"] = normalize_join_key(base_df[config.base_key_column])
 
-    base = base_df[base_cols].copy()
-    lookup = lookup_df[[config.lookup_key_col, *lookup_cols]].copy()
+    for i, lookup_config in enumerate(config.lookups, start=1):
+        lookup_item = get_table_by_id(workbook_tables, lookup_config.table_id)
+        lookup_df = lookup_item["df"].copy()
 
-    base["_join_key"] = _normalize_key(base_df[config.base_key_col])
-    lookup["_join_key"] = _normalize_key(lookup_df[config.lookup_key_col])
+        if lookup_config.key_column not in lookup_df.columns:
+            raise ValueError(
+                f"Lookup key column '{lookup_config.key_column}' was not found."
+            )
 
-    lookup = lookup.drop_duplicates(subset=["_join_key"], keep="first")
+        lookup_cols = [
+            c for c in lookup_config.columns
+            if c in lookup_df.columns and c != lookup_config.key_column
+        ]
 
-    result = base.merge(
-        lookup.drop(columns=[config.lookup_key_col]),
-        how=config.join_type,
-        on="_join_key",
-    )
+        if not lookup_cols:
+            continue
+
+        lookup_subset = lookup_df[[lookup_config.key_column] + lookup_cols].copy()
+        lookup_subset["_join_key"] = normalize_join_key(
+            lookup_df[lookup_config.key_column]
+        )
+
+        lookup_subset = lookup_subset.drop_duplicates(
+            subset=["_join_key"],
+            keep="first",
+        )
+
+        rename_map = {}
+        for col in lookup_cols:
+            if col in result.columns:
+                rename_map[col] = f"{col}_lookup_{i}"
+
+        lookup_subset = lookup_subset.rename(columns=rename_map)
+
+        result = result.merge(
+            lookup_subset.drop(columns=[lookup_config.key_column]),
+            how="left",
+            on="_join_key",
+        )
 
     return result.drop(columns=["_join_key"])

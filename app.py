@@ -111,7 +111,6 @@ if st.session_state.table_catalog:
     except Exception as e:
         st.session_state.table_catalog = []
         show_error_dialog(e)
-render_workbook_contents(st.session_state.workbook_tables)
 
 if st.session_state.workbook_tables:
     workbook_bytes = build_workbook_bytes(
@@ -138,8 +137,10 @@ if st.session_state.workbook_tables:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
+
+
+render_workbook_contents(st.session_state.workbook_tables)
 create_derived_sheet = st.checkbox("Create derived sheet", value=False)
 
 if create_derived_sheet:
     render_derived_sheet_builder()
-
