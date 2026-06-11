@@ -22,13 +22,11 @@ def render_workbook_contents(workbook_tables):
         if cols[1].button("↑", key=f"up_{item['id']}", disabled=(i == 0)):
             move_item(st.session_state.workbook_tables, i, i - 1)
             queue_toast_and_rerun(f"Moved '{item['sheet_name']}' up.", "✅")
-            st.rerun()
 
         #move down
         if cols[2].button("↓", key=f"down_{item['id']}", disabled=(i == (len(workbook_tables)) - 1)):
             move_item(st.session_state.workbook_tables, i, i + 1)
             queue_toast_and_rerun(f"Moved '{item['sheet_name']}' down.", "✅")
-            st.rerun()
         
 
         if cols[3].button("Remove", key=f"remove_{item['id']}"):
@@ -37,11 +35,6 @@ def render_workbook_contents(workbook_tables):
                 if x["id"] != item["id"]
             ]
             queue_toast_and_rerun(f"Removed '{item['sheet_name']}' from workbook.", "✅")
-            st.rerun()
-
-    clear_col1, _ = st.columns([1, 3])
-    with clear_col1:
-        if st.button("Clear workbook"):
-            st.session_state.workbook_tables = []
-            queue_toast_and_rerun("Cleared all tables from workbook.", "✅")
+            
+    
 

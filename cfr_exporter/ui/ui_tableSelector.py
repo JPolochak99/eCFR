@@ -3,8 +3,6 @@ from __future__ import annotations
 import streamlit as st
 
 def render_table_selector(catalog):
-    
-
     labels = [f"Table {item['index']}" for item in catalog]
 
     if len(labels) == 1:

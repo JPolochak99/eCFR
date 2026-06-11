@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 
 def truncate(text: str, max_len: int = 100) -> str:
     text = (text or "").strip()

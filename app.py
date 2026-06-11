@@ -12,9 +12,11 @@ from cfr_exporter.ui.ui_tablePreview import render_table_preview, load_table
 from cfr_exporter.tableFunctions.table_actions import render_table_actions, build_source_keys
 from cfr_exporter.ui.ui_tableSelector import render_table_selector
 from cfr_exporter.ui.ui_workbookContent import render_workbook_contents
-from cfr_exporter.workbookContentBuilders.workbook_builder import build_workbook_bytes
+
 from cfr_exporter.ui.ui_derived_sheet_builder import render_derived_sheet_builder
 from cfr_exporter.sanitize_names import sanitize_filename
+from cfr_exporter.downloadBtn import downloadWorkbook
+from cfr_exporter.clearWorkbookBtn import clearWorkbook
 
 st.title("CFR to Excel Export")
 init_state()
@@ -112,35 +114,17 @@ if st.session_state.table_catalog:
         st.session_state.table_catalog = []
         show_error_dialog(e)
 
-if st.session_state.workbook_tables:
-    workbook_bytes = build_workbook_bytes(
-        st.session_state.workbook_tables,
-        metadata={
-            "workbook_name": st.session_state.workbook_name,
-            "title": sidebar_inputs["title"],
-            "subtitle": sidebar_inputs["subtitle"],
-            "chapter": sidebar_inputs["chapter"],
-            "subchapter": sidebar_inputs["subchapter"],
-            "part": sidebar_inputs["part"],
-            "subpart": sidebar_inputs["subpart"],
-            "section": sidebar_inputs["section"],
-            "effective_date_str": st.session_state.effective_date_str,
-        },
-    )
 
-    final_workbook_name = sanitize_filename(st.session_state.workbook_name) + ".xlsx"
-
-    st.download_button(
-        "Download workbook",
-        workbook_bytes,
-        file_name=final_workbook_name,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
 
 
 
 render_workbook_contents(st.session_state.workbook_tables)
-create_derived_sheet = st.checkbox("Create derived sheet", value=False)
 
-if create_derived_sheet:
+if len(st.session_state.workbook_tables) == 0:
+    pass
+else:
     render_derived_sheet_builder()
+
+
+downloadWorkbook(sidebar_inputs)
+clearWorkbook()
