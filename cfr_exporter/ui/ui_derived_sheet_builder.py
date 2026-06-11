@@ -44,9 +44,11 @@ def render_derived_sheet_builder() -> None:
         base_columns = st.multiselect(
             "Columns to keep from base table",
             list(base_df.columns),
-            default=list(base_df.columns)[:5],
+            default=[],
+            placeholder="Select columns to include",
+            help="Choose the columns that will remain from the base table.",
         )
-
+        
         st.markdown("#### Lookup tables")
 
         lookup_count = st.number_input(
@@ -81,13 +83,13 @@ def render_derived_sheet_builder() -> None:
                 if c != lookup_key_column
             ]
 
-            default_lookup_columns = available_lookup_columns[-3:]
 
             lookup_columns = st.multiselect(
                 f"Columns to return from lookup table {i + 1}",
                 available_lookup_columns,
-                default=default_lookup_columns,
                 key=f"lookup_columns_{i}",
+                placeholder="Select columns to include",
+                help="Choose the columns that will be added to the derived sheet."
             )
 
             lookups.append(
