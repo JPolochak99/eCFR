@@ -10,8 +10,12 @@ from .autoSizeCols import autosize_worksheet_cols
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.utils import get_column_letter
 
+
 from datetime import datetime
 
+
+from cfr_exporter.derived_sheet_builder import apply_column_formats
+from cfr_exporter.convertToScientific import convert_scientific_columns_for_export
 
 def make_source_key(
     title: str,
@@ -72,6 +76,7 @@ def build_workbook_bytes(workbook_tables, metadata: dict | None = None) -> bytes
         meta_df.to_excel(writer, index=False, sheet_name=meta_sheet_name)
 
         ws = writer.book[meta_sheet_name]
+
         last_row = ws.max_row
         last_col = ws.max_column
         table_ref = f"A1:{get_column_letter(last_col)}{last_row}"
@@ -88,28 +93,25 @@ def build_workbook_bytes(workbook_tables, metadata: dict | None = None) -> bytes
         autosize_worksheet_cols(ws)
 
         # User sheets
+
         for idx, item in enumerate(workbook_tables, start=1):
             sheet_name = unique_sheet_name(item["sheet_name"], used_names)
-            df = item["df"]
+
+            formatting = item.get("formatting", {})
+
+            df = item["df"].copy()
+            df = convert_scientific_columns_for_export(df, formatting)
+
             df.to_excel(writer, index=False, sheet_name=sheet_name)
 
             ws = writer.book[sheet_name]
-            last_row = ws.max_row
-            last_col = ws.max_column
-            table_ref = f"A1:{get_column_letter(last_col)}{last_row}"
 
-            excel_table = Table(
-                displayName=f"Table_{idx}",
-                ref=table_ref,
+            apply_column_formats(
+                ws,
+                df,
+                formatting,
             )
-            excel_table.tableStyleInfo = TableStyleInfo(
-                name="TableStyleMedium2",
-                showFirstColumn=False,
-                showLastColumn=False,
-                showRowStripes=True,
-                showColumnStripes=False,
-            )
-            ws.add_table(excel_table)
+
             autosize_worksheet_cols(ws)
 
     buffer.seek(0)

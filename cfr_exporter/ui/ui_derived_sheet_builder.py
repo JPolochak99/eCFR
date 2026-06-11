@@ -122,6 +122,7 @@ def render_derived_sheet_builder() -> None:
                         "sheet_name": config.sheet_name,
                         "title": f"Derived: {config.sheet_name}",
                         "df": derived_df,
+                        "mode": "derived",
                     }
                 )
 

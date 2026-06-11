@@ -16,7 +16,7 @@ def render_workbook_contents(workbook_tables):
     for i, item in enumerate(workbook_tables):
         cols = st.columns([5, 1, 1, 1])
 
-        cols[0].write(f"{i+1}. {item['sheet_name']} — {item['title']}")
+        cols[0].write(f"{i+1}. {item['sheet_name']} — {item['mode']}")
         
         #move up 
         if cols[1].button("↑", key=f"up_{item['id']}", disabled=(i == 0)):

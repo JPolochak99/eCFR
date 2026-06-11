@@ -18,7 +18,11 @@ def init_state() -> None:
         "ai_summaries": {},
         "derived_sheets": [],
         "show_derived_builder": False,
+        "active_search": {},
+        "formatting": {"scientific_cols": []}, 
     }
+    
+
 
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)

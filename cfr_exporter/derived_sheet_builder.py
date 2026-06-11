@@ -96,3 +96,20 @@ def build_derived_sheet(
         )
 
     return result.drop(columns=["_join_key"])
+
+def apply_column_formats(ws, df, formatting: dict) -> None:
+    formats = {
+        "scientific_cols": "0.00E+00",
+        "number_2_decimal_cols": "0.00",
+        "percent_cols": "0.00%",
+    }
+
+    for key, excel_format in formats.items():
+        for col_name in formatting.get(key, []):
+            if col_name not in df.columns:
+                continue
+
+            col_idx = df.columns.get_loc(col_name) + 1
+
+            for row in range(2, ws.max_row + 1):
+                ws.cell(row=row, column=col_idx).number_format = excel_format
