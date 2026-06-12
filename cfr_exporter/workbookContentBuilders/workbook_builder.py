@@ -100,20 +100,55 @@ def build_workbook_bytes(workbook_tables, metadata: dict | None = None) -> bytes
             formatting = item.get("formatting", {})
 
             df = item["df"].copy()
+            df = make_unique_columns(df)
             df = convert_scientific_columns_for_export(df, formatting)
 
             df.to_excel(writer, index=False, sheet_name=sheet_name)
 
             ws = writer.book[sheet_name]
 
-            apply_column_formats(
-                ws,
-                df,
-                formatting,
-            )
+            apply_column_formats(ws, df, formatting)
+
+            last_row = ws.max_row
+            last_col = ws.max_column
+
+            if last_row >= 2 and last_col >= 1:
+                table_ref = f"A1:{get_column_letter(last_col)}{last_row}"
+
+                excel_table = Table(
+                    displayName=f"Table_{idx}",
+                    ref=table_ref,
+                )
+
+                excel_table.tableStyleInfo = TableStyleInfo(
+                    name="TableStyleMedium2",
+                    showFirstColumn=False,
+                    showLastColumn=False,
+                    showRowStripes=True,
+                    showColumnStripes=False,
+                )
+
+                ws.add_table(excel_table)
 
             autosize_worksheet_cols(ws)
 
     buffer.seek(0)
     return buffer.getvalue()
 
+
+def make_unique_columns(df):
+    counts = {}
+    new_columns = []
+
+    for col in df.columns:
+        col = str(col).strip() or "Column"
+        if col not in counts:
+            counts[col] = 0
+            new_columns.append(col)
+        else:
+            counts[col] += 1
+            new_columns.append(f"{col}_{counts[col] + 1}")
+
+    df = df.copy()
+    df.columns = new_columns
+    return df

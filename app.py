@@ -20,6 +20,8 @@ from cfr_exporter.ui.ui_tablePreview import load_table, render_table_preview
 from cfr_exporter.ui.ui_tableSelector import render_table_selector
 from cfr_exporter.ui.ui_workbookContent import render_workbook_contents
 from cfr_exporter.ui.renderAdvancedFormatting import render_advanced_formatting
+import time
+
 
 
 def current_search_inputs(sidebar_inputs: dict) -> dict:
@@ -50,6 +52,26 @@ def search_inputs_match(sidebar_inputs: dict) -> bool:
 
 st.title("CFR to Excel Export")
 init_state()
+
+if not st.session_state.app_loaded:
+    splash = st.empty()
+
+    with splash.container():
+        st.markdown("## CFR Workbook Builder")
+        st.caption("Building your workspace...")
+        progress = st.progress(0, text="Starting...")
+
+        progress.progress(35, text="Loading CFR tools...")
+        time.sleep(0.3)
+
+        progress.progress(70, text="Preparing workbook builder...")
+        time.sleep(0.3)
+
+        progress.progress(100, text="Ready.")
+        time.sleep(0.2)
+
+    splash.empty()
+    st.session_state.app_loaded = True
 
 if st.session_state.get("toast_message"):
     st.toast(st.session_state.toast_message, icon=st.session_state.toast_icon)

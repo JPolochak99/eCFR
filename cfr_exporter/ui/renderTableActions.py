@@ -54,11 +54,11 @@ def render_table_actions(
         effective_date_str=effective_date_str,
     )
 
-    add_col1, add_col2 = st.columns(2)
+    add_col1, spacer, add_col2 = st.columns([2, 4, 2])
 
     with add_col1:
         _render_add_button(
-            button_label="Add formatted table to workbook",
+            button_label="Add Formatted Table to Workbook",
             source_key=formatted_source_key,
             sheet_name=sheet_name,
             title=selected_item.get("title") or f"Table {selected_item['index']}",
@@ -69,7 +69,7 @@ def render_table_actions(
 
     with add_col2:
         _render_add_button(
-            button_label="Add raw table to workbook",
+            button_label="Add Raw Table to Workbook",
             source_key=raw_source_key,
             sheet_name=sheet_name,
             title=selected_item.get("title") or f"Table {selected_item['index']}",

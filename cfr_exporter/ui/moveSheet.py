@@ -1,5 +1,3 @@
-def move_item(workbook_tables, index_from: int, index_to: int):
-    workbook_tables[index_from], workbook_tables[index_to] = (
-        workbook_tables[index_to],
-        workbook_tables[index_from],
-    )
+def move_sheet(items: list, index_from: int, index_to: int) -> None:
+    items[index_from], items[index_to] = items[index_to], items[index_from]
+

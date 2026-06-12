@@ -5,6 +5,7 @@ import streamlit as st
 
 def init_state() -> None:
     defaults = {
+        "app_loaded": False,
         "table_catalog": [],
         "endpoint_found": False,
         "endpoint_error": "",
